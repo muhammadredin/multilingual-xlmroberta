@@ -1,0 +1,9 @@
+numpy
+pydub
+pyaudio
+pytorch
+streamlit
+st-webrtc
+twilio
+transformers
+urllib3
