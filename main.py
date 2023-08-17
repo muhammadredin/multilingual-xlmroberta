@@ -51,7 +51,8 @@ logger = logging.getLogger(__name__)
 def get_models():
     # it may be necessary for other frameworks to cache the model
     # seems pytorch keeps an internal state of the conversation
-    model_dir = "model"
+    app_directory = os.path.dirname(os.path.abspath(__file__))
+    model_dir = os.path.join(app_directory, "model")
     tokenizer = XLMRobertaTokenizer.from_pretrained(model_dir)
     model = XLMRobertaForSequenceClassification.from_pretrained(model_dir)
     return tokenizer, model
