@@ -6,7 +6,6 @@ import time
 import urllib.request
 import os
 import torch
-import pyaudio
 import re
 import sys
 
@@ -29,24 +28,24 @@ HERE = Path(__file__).parent
 
 logger = logging.getLogger(__name__)
 
-TEXT_BUCKET = []
+# TEXT_BUCKET = []
 
-# Audio recording parameters
-RATE = 16000
-CHUNK = int(RATE / 10)  # 100ms
+# # Audio recording parameters
+# RATE = 16000
+# CHUNK = int(RATE / 10)  # 100ms
 
-language_code = "id-ID"  # BCP-47 language tag for Indonesian
-client = speech.SpeechClient.from_service_account_file('key.json')
-config = speech.RecognitionConfig(
-    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-    sample_rate_hertz=RATE,
-    language_code=language_code,
-)
-streaming_config = speech.StreamingRecognitionConfig(
-    config=config, interim_results=True
-)
-button_thread = None
-stream = None
+# language_code = "id-ID"  # BCP-47 language tag for Indonesian
+# client = speech.SpeechClient.from_service_account_file('key.json')
+# config = speech.RecognitionConfig(
+#     encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+#     sample_rate_hertz=RATE,
+#     language_code=language_code,
+# )
+# streaming_config = speech.StreamingRecognitionConfig(
+#     config=config, interim_results=True
+# )
+# button_thread = None
+# stream = None
 
 @st.cache_resource
 def get_models():
@@ -83,162 +82,6 @@ def get_ice_servers():
 
     return token.ice_servers
 
-class MicrophoneStream:
-    """Opens a recording stream as a generator yielding the audio chunks."""
-
-    def __init__(self: object, rate: int, chunk: int) -> None:
-        """The audio -- and generator -- is guaranteed to be on the main thread."""
-        self._rate = rate
-        self._chunk = chunk
-
-        # Create a thread-safe buffer of audio data
-        self._buff = queue.Queue()
-        self.closed = True
-
-    def __enter__(self: object) -> object:
-        self._audio_interface = pyaudio.PyAudio()
-        self._audio_stream = self._audio_interface.open(
-            format=pyaudio.paInt16,
-            # The API currently only supports 1-channel (mono) audio
-            # https://goo.gl/z757pE
-            channels=1,
-            rate=self._rate,
-            input=True,
-            frames_per_buffer=self._chunk,
-            # Run the audio stream asynchronously to fill the buffer object.
-            # This is necessary so that the input device's buffer doesn't
-            # overflow while the calling thread makes network requests, etc.
-            stream_callback=self._fill_buffer,
-        )
-
-        self.closed = False
-        return self
-
-    def __exit__(
-        self: object,
-        type: object,
-        value: object,
-        traceback: object,
-    ) -> None:
-        """Closes the stream, regardless of whether the connection was lost or not."""
-        self._audio_stream.stop_stream()
-        self._audio_stream.close()
-        self.closed = True
-        # Signal the generator to terminate so that the client's
-        # streaming_recognize method will not block the process termination.
-        self._buff.put(None)
-        self._audio_interface.terminate()
-
-    def _fill_buffer(
-        self: object,
-        in_data: object,
-        frame_count: int,
-        time_info: object,
-        status_flags: object,
-    ) -> object:
-        """Continuously collect data from the audio stream, into the buffer.
-
-        Args:
-            in_data: The audio data as a bytes object
-            frame_count: The number of frames captured
-            time_info: The time information
-            status_flags: The status flags
-
-        Returns:
-            The audio data as a bytes object
-        """
-        self._buff.put(in_data)
-        return None, pyaudio.paContinue
-
-    def generator(self: object) -> object:
-        """Generates audio chunks from the stream of audio data in chunks.
-
-        Args:
-            self: The MicrophoneStream object
-
-        Returns:
-            A generator that outputs audio chunks.
-        """
-        while not self.closed:
-            # Use a blocking get() to ensure there's at least one chunk of
-            # data, and stop iteration if the chunk is None, indicating the
-            # end of the audio stream.
-            chunk = self._buff.get()
-            if chunk is None:
-                return
-            data = [chunk]
-
-            # Now consume whatever other data's still buffered.
-            while True:
-                try:
-                    chunk = self._buff.get(block=False)
-                    if chunk is None:
-                        return
-                    data.append(chunk)
-                except queue.Empty:
-                    break
-            yield b"".join(data)
-            
-def listen_print_loop(responses: object, status, text) -> None:
-    global TEXT_BUCKET
-    
-    listener_activated = False
-    num_chars_printed = 0
-
-    for response in responses:
-        if not response.results:
-            continue
-        result = response.results[0]
-        if not result.alternatives:
-            continue
-        transcript = result.alternatives[0].transcript
-        overwrite_chars = " " * (num_chars_printed - len(transcript))
-        
-        if not listener_activated:
-            status.write("Listener Activated")
-            listener_activated = True
-
-        if not result.is_final:
-            sys.stdout.write(transcript + overwrite_chars + "\r")
-            sys.stdout.flush()
-            num_chars_printed = len(transcript)
-        else:
-            text.markdown(transcript + overwrite_chars)
-            TEXT_BUCKET.append(transcript)
-            if re.search(r"\b(exit|quit)\b", transcript, re.I):
-                status.write("Exiting..")
-                break
-            num_chars_printed = 0
-
-def record_thread(stream: MicrophoneStream, streaming_config: speech.StreamingRecognitionConfig, status, text) -> None:
-    with stream:
-        audio_generator = stream.generator()
-        requests = (
-            speech.StreamingRecognizeRequest(audio_content=content)
-            for content in audio_generator
-        )
-        responses = client.streaming_recognize(streaming_config, requests)
-        listen_print_loop(responses, status, text)
-
-def start_recording(status, text):
-    global stream
-    global button_thread
-    stream = MicrophoneStream(RATE, CHUNK)
-    status.write("Recording started.")
-    button_thread = threading.Thread(target=record_thread, args=(stream, streaming_config, status, text))
-    button_thread.start()
-
-def stop_recording(status):
-    global stream
-    global button_thread
-    status.write("Stopping Record...")
-    if stream is not None:
-        stream.__exit__(None, None, None)
-    if button_thread is not None:
-        button_thread.join()
-    time.sleep(1)
-    status.write("")
-
 def main():
     st.header("Multilingual Speech-Text-based Toxic Comment Classifier")
     st.markdown(
@@ -251,7 +94,7 @@ This Project is created based on the XLM-Roberta Cross-lingual Algorithm for The
 
     sound_classifier = "Sound-based Classifier"
     text_classifier = "Text-based Classifier"
-    app_mode = st.selectbox("Choose the app mode", [sound_classifier, text_classifier])
+    app_mode = st.selectbox("Choose the app mode", [text_classifier, sound_classifier])
 
     if app_mode == sound_classifier:
         app_sst()
@@ -259,76 +102,77 @@ This Project is created based on the XLM-Roberta Cross-lingual Algorithm for The
         app_sst_with_video()
 
 def app_sst():
-    global stream
-    global button_thread
-    global config
+#     global stream
+#     global button_thread
+#     global config
+
+    st.title("Sorry, this feature is still on maintenance")    
+#     webrtc_ctx = webrtc_streamer(
+#         key="key",
+#         # mode=WebRtcMode.SENDONLY,
+#         # audio_receiver_size=1024,
+#         # rtc_configuration={
+#         #     "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+#         # },
+#         # media_stream_constraints={"video": False, "audio": True},
+#     )
     
-    webrtc_ctx = webrtc_streamer(
-        key="key",
-        # mode=WebRtcMode.SENDONLY,
-        # audio_receiver_size=1024,
-        # rtc_configuration={
-        #     "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-        # },
-        # media_stream_constraints={"video": False, "audio": True},
-    )
+#     status_indicator = st.empty()
+#     text_output = st.empty()
+
+#     streaming_config = speech.StreamingRecognitionConfig(
+#         config=config, interim_results=True
+#     )
+
+#     status_indicator.write(webrtc_ctx.state.playing)
+#     if not webrtc_ctx.state.playing:
+#         return
     
-    status_indicator = st.empty()
-    text_output = st.empty()
+#     status_indicator.write("Recording started.")
+#     while True:
+#         if webrtc_ctx.audio_receiver:
+#             if stream is None:
+#                 stream = MicrophoneStream(RATE, CHUNK)
+#                 status_indicator.write("Recording started.")
+#                 button_thread = threading.Thread(target=record_thread, args=(stream, streaming_config, status_indicator, text_output))
+#                 button_thread.start()
 
-    streaming_config = speech.StreamingRecognitionConfig(
-        config=config, interim_results=True
-    )
+#             sound_chunk = pydub.AudioSegment.empty()
+#             try:
+#                 audio_frames = webrtc_ctx.audio_receiver.get_frames(timeout=1)
+#             except queue.Empty:
+#                 time.sleep(0.1)
+#                 status_indicator.write("No frame arrived.")
+#                 continue
 
-    status_indicator.write(webrtc_ctx.state.playing)
-    if not webrtc_ctx.state.playing:
-        return
-    
-    status_indicator.write("Recording started.")
-    while True:
-        if webrtc_ctx.audio_receiver:
-            if stream is None:
-                stream = MicrophoneStream(RATE, CHUNK)
-                status_indicator.write("Recording started.")
-                button_thread = threading.Thread(target=record_thread, args=(stream, streaming_config, status_indicator, text_output))
-                button_thread.start()
+#             status_indicator.write("Running. Say something!")
 
-            sound_chunk = pydub.AudioSegment.empty()
-            try:
-                audio_frames = webrtc_ctx.audio_receiver.get_frames(timeout=1)
-            except queue.Empty:
-                time.sleep(0.1)
-                status_indicator.write("No frame arrived.")
-                continue
+#             for audio_frame in audio_frames:
+#                 sound = pydub.AudioSegment(
+#                     data=audio_frame.to_ndarray().tobytes(),
+#                     sample_width=audio_frame.format.bytes,
+#                     frame_rate=audio_frame.sample_rate,
+#                     channels=len(audio_frame.layout.channels),
+#                 )
+#                 sound_chunk += sound
 
-            status_indicator.write("Running. Say something!")
+#             if len(sound_chunk) > 0:
+#                 sound_chunk = sound_chunk.set_channels(1).set_frame_rate(
+#                     streaming_config.config.sample_rate_hertz
+#                 )
+#                 buffer = np.array(sound_chunk.get_array_of_samples())
+#                 request = speech.StreamingRecognizeRequest(audio_content=buffer.tobytes())
+#                 stream.write(request)
 
-            for audio_frame in audio_frames:
-                sound = pydub.AudioSegment(
-                    data=audio_frame.to_ndarray().tobytes(),
-                    sample_width=audio_frame.format.bytes,
-                    frame_rate=audio_frame.sample_rate,
-                    channels=len(audio_frame.layout.channels),
-                )
-                sound_chunk += sound
-
-            if len(sound_chunk) > 0:
-                sound_chunk = sound_chunk.set_channels(1).set_frame_rate(
-                    streaming_config.config.sample_rate_hertz
-                )
-                buffer = np.array(sound_chunk.get_array_of_samples())
-                request = speech.StreamingRecognizeRequest(audio_content=buffer.tobytes())
-                stream.write(request)
-
-                responses = list(stream)
-                for response in responses:
-                    for result in response.results:
-                        if result.alternatives:
-                            text = result.alternatives[0].transcript
-                            text_output.markdown(f"**Text:** {text}")
-        else:
-            status_indicator.write("AudioReceiver is not set. Abort.")
-            break
+#                 responses = list(stream)
+#                 for response in responses:
+#                     for result in response.results:
+#                         if result.alternatives:
+#                             text = result.alternatives[0].transcript
+#                             text_output.markdown(f"**Text:** {text}")
+#         else:
+#             status_indicator.write("AudioReceiver is not set. Abort.")
+#             break
 
     # col1, col2 = st.columns([0.5, 2])
     
