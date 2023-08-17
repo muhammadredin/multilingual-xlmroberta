@@ -36,7 +36,7 @@ RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
 language_code = "id-ID"  # BCP-47 language tag for Indonesian
-client = speech.SpeechClient.from_service_account_file('../key.json')
+client = speech.SpeechClient.from_service_account_file('key.json')
 config = speech.RecognitionConfig(
     encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
     sample_rate_hertz=RATE,
@@ -52,7 +52,7 @@ stream = None
 def get_models():
     # it may be necessary for other frameworks to cache the model
     # seems pytorch keeps an internal state of the conversation
-    model_dir = "../my_model/xlm-roberta-model"
+    model_dir = "model"
     tokenizer = XLMRobertaTokenizer.from_pretrained(model_dir)
     model = XLMRobertaForSequenceClassification.from_pretrained(model_dir)
     return tokenizer, model
