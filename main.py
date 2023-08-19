@@ -115,6 +115,7 @@ def app_sst():
 #     global streamhttps://github.com/muhammadredin/multilingual-xlmroberta/blob/main/main.py
 #     global button_thread
 #     global config
+    global client
 
     st.title("Sorry, this feature is still on maintenance")   
 
@@ -145,6 +146,7 @@ def app_sst():
         )
 
         print(response)
+        st.title(response)
             
 #     webrtc_ctx = webrtc_streamer(
 #         key="key",
