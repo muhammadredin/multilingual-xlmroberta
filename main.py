@@ -121,14 +121,14 @@ def app_sst():
     
     if audio is not None:
         # To read file as bytes:
-        # audio_path = "audio_file.mp3"
+        audio_path = "audio_file.mp3"
 
-        # audio_data = audio.getvalue()
+        audio_data = audio.read()
         
-        # with open(audio_path, "wb") as f:
-        #     f.write(audio_data)
+        with open(audio_path, "wb") as f:
+            f.write(audio_data)
 
-        audio_file = speech.RecognitionAudio(content=audio)
+        audio_file = speech.RecognitionAudio(content=audio_path)
 
         config = speech.RecognitionAudio(
             sample_rate_hertz=44100,
