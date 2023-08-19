@@ -131,13 +131,13 @@ def app_sst():
 
         encoded_audio_data = base64.b64encode(audio_data).decode()
         
-        audio_file = speech.RecognitionAudio(content=encoded_audio_data)
-
         config = speech.RecognitionAudio(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=44100,
             language_code='id-ID'
         )
+
+        audio_file = speech.RecognitionAudio(content=encoded_audio_data)
 
         response = client.recognize(
             config=config,
