@@ -145,8 +145,7 @@ def app_sst():
             audio=audio_file
         )
 
-        for result in response.results:
-                st.write(f"Transcript: {result.alternatives[0].transcript}")
+        st.title('response.results')
             
 #     webrtc_ctx = webrtc_streamer(
 #         key="key",
