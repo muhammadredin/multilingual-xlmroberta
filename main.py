@@ -28,6 +28,14 @@ HERE = Path(__file__).parent
 
 logger = logging.getLogger(__name__)
 
+# Get the directory where main.py is located
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to file.txt
+file_path = os.path.join(current_dir, "key.json")
+
+client = speech.SpeechClient.from_service_account_file(file_path)
+
 # TEXT_BUCKET = []
 
 # # Audio recording parameters
@@ -107,7 +115,30 @@ def app_sst():
 #     global button_thread
 #     global config
 
-    st.title("Sorry, this feature is still on maintenance")    
+    st.title("Sorry, this feature is still on maintenance")   
+
+    audio = st.file_uploader("Choose a photo")
+        
+        if audio is not None:
+            # To read file as bytes:
+            audio_path = "skin_disease.mp3"
+            
+            with open(audio_path, "wb") as f:
+                mp3_data = f.read()
+
+            audio_file = speech.RecognitionAudio(content=mp3_data)
+
+            config = speech.RecognitionAudio(
+                sample_rate_hertz=44100,
+                language_code='id-ID'
+            )
+
+            response = client.recognize(
+                config=config
+                audio=audio_file
+            )
+
+            print(response)
 #     webrtc_ctx = webrtc_streamer(
 #         key="key",
 #         # mode=WebRtcMode.SENDONLY,
