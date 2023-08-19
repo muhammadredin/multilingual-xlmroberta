@@ -111,17 +111,17 @@ This Project is created based on the XLM-Roberta Cross-lingual Algorithm for The
         app_sst_with_video()
 
 def app_sst():
-#     global stream
+#     global streamhttps://github.com/muhammadredin/multilingual-xlmroberta/blob/main/main.py
 #     global button_thread
 #     global config
 
     st.title("Sorry, this feature is still on maintenance")   
 
-    audio = st.file_uploader("Choose a photo")
+    audio = st.file_uploader("Choose an audio file")
         
         if audio is not None:
             # To read file as bytes:
-            audio_path = "skin_disease.mp3"
+            audio_path = "audio_file.mp3"
             
             with open(audio_path, "wb") as f:
                 mp3_data = f.read()
@@ -139,6 +139,7 @@ def app_sst():
             )
 
             print(response)
+            
 #     webrtc_ctx = webrtc_streamer(
 #         key="key",
 #         # mode=WebRtcMode.SENDONLY,
