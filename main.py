@@ -129,7 +129,7 @@ def app_sst():
         with open(audio_path, "wb") as f:
             f.write(audio_data)
 
-        encoded_audio_data = base64.b64encode(audio_data).decode()
+        encoded_audio_data = base64.b64encode(audio_path).decode()
         
         config = speech.RecognitionAudio(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
