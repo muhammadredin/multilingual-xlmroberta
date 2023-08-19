@@ -118,27 +118,27 @@ def app_sst():
     st.title("Sorry, this feature is still on maintenance")   
 
     audio = st.file_uploader("Choose an audio file")
+    
+    if audio is not None:
+        # To read file as bytes:
+        audio_path = "audio_file.mp3"
         
-        if audio is not None:
-            # To read file as bytes:
-            audio_path = "audio_file.mp3"
-            
-            with open(audio_path, "wb") as f:
-                mp3_data = f.read()
+        with open(audio_path, "wb") as f:
+            mp3_data = f.read()
 
-            audio_file = speech.RecognitionAudio(content=mp3_data)
+        audio_file = speech.RecognitionAudio(content=mp3_data)
 
-            config = speech.RecognitionAudio(
-                sample_rate_hertz=44100,
-                language_code='id-ID'
-            )
+        config = speech.RecognitionAudio(
+            sample_rate_hertz=44100,
+            language_code='id-ID'
+        )
 
-            response = client.recognize(
-                config=config
-                audio=audio_file
-            )
+        response = client.recognize(
+            config=config
+            audio=audio_file
+        )
 
-            print(response)
+        print(response)
             
 #     webrtc_ctx = webrtc_streamer(
 #         key="key",
