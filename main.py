@@ -8,6 +8,7 @@ import os
 import torch
 import re
 import sys
+import base64
 
 from google.cloud import speech
 
@@ -128,9 +129,12 @@ def app_sst():
         with open(audio_path, "wb") as f:
             f.write(audio_data)
 
-        audio_file = speech.RecognitionAudio(content=audio_path)
+        encoded_audio_data = base64.b64encode(audio_data).decode()
+        
+        audio_file = speech.RecognitionAudio(content=encoded_audio_data)
 
         config = speech.RecognitionAudio(
+            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=44100,
             language_code='id-ID'
         )
