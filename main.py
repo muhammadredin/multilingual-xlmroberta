@@ -133,7 +133,7 @@ def app_sst():
         
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sampleRateHertz=44100,
+            sample_rate_hertz=16000,
             language_code='id-ID'
         )
 
