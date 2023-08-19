@@ -145,7 +145,7 @@ def app_sst():
             audio=audio_file
         )
 
-        st.title(response.results)
+        st.title(response.results.alternatives[0])
             
 #     webrtc_ctx = webrtc_streamer(
 #         key="key",
