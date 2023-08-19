@@ -134,7 +134,7 @@ def app_sst():
         )
 
         response = client.recognize(
-            config=config
+            config=config,
             audio=audio_file
         )
 
