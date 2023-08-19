@@ -131,8 +131,9 @@ def app_sst():
 
         encoded_audio_data = base64.b64encode(audio_data).decode()
         
-        config = speech.RecognitionAudio(
-            sample_rate_hertz=44100,
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            sampleRateHertz=44100,
             language_code='id-ID'
         )
 
