@@ -123,7 +123,7 @@ def app_sst():
         # To read file as bytes:
         audio_path = "audio_file.mp3"
 
-        audio_data = audio_path.getvalue()
+        audio_data = audio.getvalue()
         
         with open(audio_path, "wb") as f:
             f.write(audio_data)
