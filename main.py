@@ -135,7 +135,7 @@ def app_sst():
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=16000,
-            language_code='id-ID'
+            language_code='en-US'
         )
 
         audio_file = speech.RecognitionAudio(content=encoded_audio_data)
