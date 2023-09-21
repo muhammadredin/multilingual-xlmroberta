@@ -1,0 +1,1 @@
+{"model_name": "pt-original", "save_mode": "original", "max_length": 512, "captum_explanation": true, "base_model": "xlm-roberta-base"}
