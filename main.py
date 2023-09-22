@@ -269,7 +269,7 @@ def app_sst_with_video():
     st.title("Chat Room")
 
     user_message = st.chat_input("Chat something", key="input_text")
-    st.session_state.history.append({"message": user_message, "response": "user"})
+    st.session_state.history.append({"message": user_message.lower(), "response": "user"})
 
     if len(st.session_state.history) > 1:
         for i, chat in enumerate(st.session_state.history):
