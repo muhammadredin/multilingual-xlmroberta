@@ -275,7 +275,7 @@ def app_sst_with_video():
         for i, chat in enumerate(st.session_state.history):
             if chat["message"] == None:
                 continue
-            if generate_answer(chat["message"]) == 1:
+            if generate_answer(chat["message"].lower()) == 1:
                 message = st.chat_message("assistant")
                 message.write("TOXIC COMMENT NOT ALLOWED")
                 st.session_state.history.pop(i)
