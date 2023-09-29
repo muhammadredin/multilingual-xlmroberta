@@ -93,18 +93,26 @@ def get_ice_servers():
     return token.ice_servers
 
 def main():
-    st.header("Multilingual Speech-Text-based Toxic Comment Classifier")
+#     st.header("Multilingual Speech-Text-based Toxic Comment Classifier")
+#     st.markdown(
+#         """
+# Welcome To Our Multilingual Speech-text-based Toxic Comment Classifier
+
+# This Project is created based on the XLM-Roberta Cross-lingual Algorithm for The World Invention Competition and Exhibiton 2023
+# """
+#     )
+    st.header("XLM-Roberta Sexual Text Detection")
     st.markdown(
         """
-Welcome To Our Multilingual Speech-text-based Toxic Comment Classifier
+Selamat datang di XLM-Roberta Sexual Text Detection
 
-This Project is created based on the XLM-Roberta Cross-lingual Algorithm for The World Invention Competition and Exhibiton 2023
+Project ini dibuat sebagai hasil penelitian pada ajang OPSI 2023 oleh M. Redin Birezqic
 """
     )
 
     sound_classifier = "Sound-based Classifier"
     text_classifier = "Text-based Classifier"
-    app_mode = st.selectbox("Choose the app mode", [text_classifier, sound_classifier])
+    app_mode = st.selectbox("Pilih mode aplikasi", [text_classifier, sound_classifier])
 
     if app_mode == sound_classifier:
         app_sst()
@@ -277,7 +285,7 @@ def app_sst_with_video():
                 continue
             if generate_answer(chat["message"].lower()) == 1:
                 message = st.chat_message("assistant")
-                message.write("TOXIC COMMENT NOT ALLOWED")
+                message.write("Teks Anda Terindikasi Unsur Seksual")
                 st.session_state.history.pop(i)
             else:
                 message = st.chat_message(chat["response"])
